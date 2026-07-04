@@ -8,7 +8,15 @@
 
 **Demo login:** `demo@aegis.dev` / `password123`
 
-**Video Demonstration:** [Google Drive Link](https://drive.google.com/drive/folders/15gdfdKvkz7bliCusRVMPkw_9txj-_PWw?usp=drive_link)
+**Video Demonstration:** [Google Drive Link](https://drive.google.com/drive/folders/15gdfdKvkz7bliCusRVMPkw_9txj-_PWw)
+or 
+
+
+https://github.com/user-attachments/assets/db9e2744-02c7-4868-a7aa-0e8805630ae9
+
+
+
+
 
 ---
 
