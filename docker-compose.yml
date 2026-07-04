@@ -1,0 +1,86 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# AEGIS — one command to run the whole stack:  docker compose up --build
+#
+#   db        PostgreSQL 16 (the source of truth + the queue)
+#   migrate   one-shot: applies schema.sql + seed.sql, sets the demo password
+#   api       Express REST API + in-process dispatcher        → :4000
+#   worker    job worker (scale with --scale worker=N)
+#   frontend  Vite dev server for the dashboard               → :5173
+#
+# Then open http://localhost:5173 and sign in with  demo@aegis.dev / password123
+# ─────────────────────────────────────────────────────────────────────────────
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: aegis
+      POSTGRES_PASSWORD: aegis
+      POSTGRES_DB: aegis
+    ports:
+      - "5432:5432"
+    volumes:
+      - aegis_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aegis -d aegis"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  migrate:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    command: ["node", "src/migrate.js"]
+    environment:
+      DATABASE_URL: postgres://aegis:aegis@db:5432/aegis
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
+  api:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    environment:
+      DATABASE_URL: postgres://aegis:aegis@db:5432/aegis
+      PORT: "4000"
+      JWT_SECRET: dev-secret-change-me
+      DISPATCHER_LEASE: "15"
+    ports:
+      - "4000:4000"
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
+  worker:
+    build:
+      context: .
+      dockerfile: worker/Dockerfile
+    environment:
+      DATABASE_URL: postgres://aegis:aegis@db:5432/aegis
+      WORKER_CONCURRENCY: "4"
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    # Run several workers to see the fleet + distributed claiming:
+    #   docker compose up --build --scale worker=3
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    environment:
+      # Proxy /api to the api service inside the compose network.
+      VITE_API_TARGET: http://api:4000
+    ports:
+      - "5173:5173"
+    depends_on:
+      - api
+
+volumes:
+  aegis_pgdata:

@@ -1,0 +1,15 @@
+{
+  "name": "aegis-worker",
+  "version": "1.0.0",
+  "description": "AEGIS worker — polls queues, claims jobs atomically, executes with retries",
+  "type": "module",
+  "main": "src/worker.js",
+  "scripts": {
+    "start": "node src/worker.js",
+    "dev": "node --watch src/worker.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "pg": "^8.12.0"
+  }
+}
